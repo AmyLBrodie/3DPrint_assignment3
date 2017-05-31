@@ -79,6 +79,7 @@ void TestVoxels::testVoxelRegistration()
 
     dx = dy = dz = 1024;
     vox->setDim(dx, dy, dz); // typical large voxel volume
+    
     vox->setFrame(cgp::Point(0.0f, 0.0f, 0.0f), cgp::Vector(1.0f, 1.0f, 1.0f)); // unit cube
 
     // check some corner positions and center voxel
@@ -90,6 +91,8 @@ void TestVoxels::testVoxelRegistration()
     CPPUNIT_ASSERT(vox->getVoxelPos(511,511,511) == cgp::Point(0.4995112f, 0.4995112f, 0.4995112f));
     cerr << "VOXEL REGISTRATION PASSED" << endl << endl;
 }
+
+
 
 //#if 0 /* Disabled since it crashes the whole test suite */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TestVoxels, TestSet::perBuild());

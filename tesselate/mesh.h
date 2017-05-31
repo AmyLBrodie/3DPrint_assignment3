@@ -384,6 +384,10 @@ public:
      * Build a simple tetrahedron that has a double shell breaking 2-manifold validity
      */
     void overlapTetTest();
+    
+    vector<Triangle> getTris();
+    
+    vector<cgp::Point> getVerts();
 };
 
 #endif

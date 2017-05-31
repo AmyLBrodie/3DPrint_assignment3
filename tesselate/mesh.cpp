@@ -17,6 +17,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <unordered_map>
+#include <set>
 
 using namespace std;
 using namespace cgp;
@@ -910,24 +911,15 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
     }
     
     
-    
-    
-    
     for(int iEdge = 0; iEdge < 12; iEdge++)
     {
     	xSect = vox.getMCEdgeXsect(iEdge);
     	
     	if(edgeFlag & (1<<iEdge)){
-    		worldCoords = vox.getVoxelPos(x+xSect.x, y+xSect.y, z+xSect.z);
+    		worldCoords = vox.getVoxelPos(x+xSect.x, y+xSect.y, z+xSect.z) ;
     		edgesVec[iEdge].x = worldCoords.x;
     		edgesVec[iEdge].y = worldCoords.y;
     		edgesVec[iEdge].z = worldCoords.z;
-    		
-    		/*normEdgesVec[iEdge].i = worldCoords.x + vox.getVertOffset(iEdge,0) + xSect.x;
-    		normEdgesVec[iEdge].j = worldCoords.y + vox.getVertOffset(iEdge,1) + xSect.y;
-    		normEdgesVec[iEdge].k = worldCoords.z + vox.getVertOffset(iEdge,2) + xSect.z;
-    		
-    		normEdgesVec[iEdge].normalize();*/
     	}
     }
     
@@ -937,7 +929,7 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
     {
 		if(triangleTable[vertFlag][3*iTriangle] < 0)
 			break;
-		Triangle tri;
+		//Triangle tri;
 		
 		for(int iCorner = 0; iCorner < 3; iCorner++)
         {
@@ -947,11 +939,16 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
         	verts.push_back(edgesVec[iVertex]);
         	//tri.n = normEdgesVec[iVertex];
 			//tri.n.normalize();
-        	tri.v[iCorner] = verts.size()-1;
+        	//tri.v[iCorner] = verts.size()-1;
             //glColor3f(1.0f, 1.0f, 1.0f);
             //glNormal3f(normEdgesVec[iVertex].i, normEdgesVec[iVertex].j, normEdgesVec[iVertex].k);
             //glVertex3f(edgesVec[iVertex].i, edgesVec[iVertex].j, edgesVec[iVertex].k);
         }
+        
+        Triangle tri;
+        tri.v[0] = verts.size()-1;
+        tri.v[1] = verts.size()-2;
+        tri.v[2] = verts.size()-3;
         tris.push_back(tri);
 			
 	}
@@ -965,6 +962,9 @@ void Mesh::marchingCubes(VoxelVolume vox)
     // stub, needs completing
     int dimX, dimY, dimZ;
     vox.getDim(dimX, dimY, dimZ);
+    /*cgp::Point voxCorner;
+    cgp::Vector voxDiagonal;
+    vox.getFrame(voxCorner, voxDiagonal);*/
     //cerr << dimX << " " << dimY << " " << dimZ << endl;
     tris.clear();
     verts.clear();
@@ -975,17 +975,61 @@ void Mesh::marchingCubes(VoxelVolume vox)
     		}
     	}
     }
-    //mergeVerts();
+    mergeVerts();
     deriveFaceNorms();
-    //deriveVertNorms();
-    writeSTL("test.stl");
-    readSTL("test.stl");
+    deriveVertNorms();
+    //writeSTL("test.stl");
+    //readSTL("test.stl");
     
 }
 
 void Mesh::laplacianSmooth(int iter, float rate)
 {
     // stub, needs completing
+    std::vector<std::vector<int>> incidentTris;
+    std::vector<int> tempVector;
+    for (int i=0; i< (int) verts.size(); i++){
+    	incidentTris.push_back(tempVector);
+    }
+    
+    for (int i=0; i<(int) tris.size(); i++){
+    	incidentTris[tris[i].v[0]].push_back(i);
+    	incidentTris[tris[i].v[1]].push_back(i);
+    	incidentTris[tris[i].v[2]].push_back(i);
+    }
+    
+    for (int i=0; i<iter; i++){
+    	for (int j=0; j<(int)verts.size(); j++){
+    	
+    		std::set<int> vertNeighbours;
+    		for (int k=0; k<(int)incidentTris[j].size(); k++){
+    			Triangle temp = tris[incidentTris[j][k]];
+    			vertNeighbours.insert(temp.v[0]);
+    			vertNeighbours.insert(temp.v[1]);
+    			vertNeighbours.insert(temp.v[2]);
+    		}
+    		vertNeighbours.erase(j);
+    		
+    		cgp::Point avgDifference(0.0f,0.0f,0.0f);
+			for (auto k=vertNeighbours.begin(); k!=vertNeighbours.end(); k++){
+				avgDifference.x += verts[*k].x - verts[j].x;
+				avgDifference.y += verts[*k].y - verts[j].y;
+				avgDifference.z += verts[*k].z - verts[j].z;
+			}
+			
+			float average = 1.0f/vertNeighbours.size();
+			avgDifference.x *= average;
+			avgDifference.y *= average;
+			avgDifference.z *= average;
+			
+			verts[j].x += (rate * avgDifference.x);
+			verts[j].y += (rate * avgDifference.y);
+			verts[j].z += (rate * avgDifference.z);
+    	}
+    }
+    
+    
+    
     deriveFaceNorms();
     deriveVertNorms();
 }
@@ -1570,4 +1614,12 @@ bool Mesh::manifoldValidity()
     // each other for intersection. This would require a spatial data structure such as a bounding sphere hierarchy to accelerate properly
     // which is beyond the scope of this assignment
     return true;
+}
+
+vector<Triangle> Mesh::getTris(){
+	return tris;
+}
+
+vector<cgp::Point> Mesh::getVerts(){
+	return verts;
 }
