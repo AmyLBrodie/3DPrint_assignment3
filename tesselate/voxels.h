@@ -143,6 +143,8 @@ public:
      * @retval      position in unit cube of the intersection point
      */
     cgp::Point getMCEdgeXsect(int ebit);
+    
+    int getVertOffset(int iEdge, int i);
 };
 
 #endif

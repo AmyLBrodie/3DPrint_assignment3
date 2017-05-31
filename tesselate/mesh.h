@@ -304,7 +304,9 @@ public:
      * @param sidelen   length of one side of the bounding cube
      */
     void boxFit(float sidelen);
-
+	
+	void marchCube(VoxelVolume & vox, int x, int y, int z);
+	
     /**
      * Apply marching cubes to a voxel volume to generate a mesh
      * (Required to shoehorn Bloyd's code into current framework - see http://paulbourke.net/geometry/polygonise/marchingsource.cpp)

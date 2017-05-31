@@ -21,7 +21,7 @@ void TestCSG::setUp()
 
 void TestCSG::tearDown()
 {
-    delete csg;
+    //delete csg;
 }
 
 void TestCSG::testSimpleCSG()

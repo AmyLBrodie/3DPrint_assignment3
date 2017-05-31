@@ -48,14 +48,14 @@ int cubeEdgeFlags[256]=
     0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c, 0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x000
 };
 
-/*
+
  // lists the index of the endpoint vertices for each of the 12 edges of the cube
  static const int EdgeConnection[12][2] =
  {
  {0,1}, {1,2}, {2,3}, {3,0},
  {4,5}, {5,6}, {6,7}, {7,4},
  {0,4}, {1,5}, {2,6}, {3,7}
- };*/
+ };
 //========== END BLOYD
 
 // intersection point for unit cube boolean voxels. Always half way along an edge.
@@ -217,7 +217,18 @@ int VoxelVolume::getMCVertIdx(int x, int y, int z)
 {
     // stub, needs completing
     // refer to data structures at the top of voxels.cpp and mesh.cpp
-    return 0;
+    int localCube[8];
+    int vertIdx = 0;
+    for(int i = 0; i < 8; i++)
+	{
+		localCube[i] = get(x+cubePos[i][0], y+cubePos[i][1], z+cubePos[i][2]);
+		if (localCube[i] == 1){
+			vertIdx |= 1 << i;
+		}
+		//vertIdx |= localCube[i] << i;
+	}
+	//cerr << vertIdx << endl;
+    return vertIdx;
 }
 
 int VoxelVolume::getMCEdgeIdx(int vcode)
@@ -230,3 +241,8 @@ cgp::Point VoxelVolume::getMCEdgeXsect(int ebit)
     cgp::Point xsect = cgp::Point(edgePos[ebit][0], edgePos[ebit][1], edgePos[ebit][2]);
     return xsect;
 }
+
+int VoxelVolume::getVertOffset(int iEdge, int i){
+	return cubePos[EdgeConnection[iEdge][0]][i];
+}
+

@@ -890,9 +890,97 @@ void Mesh::boxFit(float sidelen)
     }
 }
 
+
+void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
+{
+
+	int edgeFlag,vertFlag,iVertex;
+	cgp::Point xSect;
+	cgp::Point edgesVec[12];
+	cgp::Vector normEdgesVec[12];
+	cgp::Point worldCoords;
+    
+    vertFlag = vox.getMCVertIdx(x,y,z);
+    
+    edgeFlag = vox.getMCEdgeIdx(vertFlag);
+    
+    if(edgeFlag == 0) 
+    {
+    	return;
+    }
+    
+    
+    
+    
+    
+    for(int iEdge = 0; iEdge < 12; iEdge++)
+    {
+    	xSect = vox.getMCEdgeXsect(iEdge);
+    	
+    	if(edgeFlag & (1<<iEdge)){
+    		worldCoords = vox.getVoxelPos(x+xSect.x, y+xSect.y, z+xSect.z);
+    		edgesVec[iEdge].x = worldCoords.x;
+    		edgesVec[iEdge].y = worldCoords.y;
+    		edgesVec[iEdge].z = worldCoords.z;
+    		
+    		/*normEdgesVec[iEdge].i = worldCoords.x + vox.getVertOffset(iEdge,0) + xSect.x;
+    		normEdgesVec[iEdge].j = worldCoords.y + vox.getVertOffset(iEdge,1) + xSect.y;
+    		normEdgesVec[iEdge].k = worldCoords.z + vox.getVertOffset(iEdge,2) + xSect.z;
+    		
+    		normEdgesVec[iEdge].normalize();*/
+    	}
+    }
+    
+    
+    
+    for(int iTriangle = 0; iTriangle < 5; iTriangle++)
+    {
+		if(triangleTable[vertFlag][3*iTriangle] < 0)
+			break;
+		Triangle tri;
+		
+		for(int iCorner = 0; iCorner < 3; iCorner++)
+        {
+        	//cerr << vertFlag << endl;
+        	iVertex = triangleTable[vertFlag][3*iTriangle+iCorner];
+        	//cgp::Point pnt = edgesVec[iVertex];
+        	verts.push_back(edgesVec[iVertex]);
+        	//tri.n = normEdgesVec[iVertex];
+			//tri.n.normalize();
+        	tri.v[iCorner] = verts.size()-1;
+            //glColor3f(1.0f, 1.0f, 1.0f);
+            //glNormal3f(normEdgesVec[iVertex].i, normEdgesVec[iVertex].j, normEdgesVec[iVertex].k);
+            //glVertex3f(edgesVec[iVertex].i, edgesVec[iVertex].j, edgesVec[iVertex].k);
+        }
+        tris.push_back(tri);
+			
+	}
+    
+    
+}
+
+
 void Mesh::marchingCubes(VoxelVolume vox)
 {
     // stub, needs completing
+    int dimX, dimY, dimZ;
+    vox.getDim(dimX, dimY, dimZ);
+    //cerr << dimX << " " << dimY << " " << dimZ << endl;
+    tris.clear();
+    verts.clear();
+    for (int i=0; i<dimX-1; i++){
+    	for (int j=0; j<dimY-1; j++){
+    		for (int k=0; k<dimZ-1; k++){
+    			marchCube(vox,i,j,k);
+    		}
+    	}
+    }
+    //mergeVerts();
+    deriveFaceNorms();
+    //deriveVertNorms();
+    writeSTL("test.stl");
+    readSTL("test.stl");
+    
 }
 
 void Mesh::laplacianSmooth(int iter, float rate)
