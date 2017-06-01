@@ -115,6 +115,7 @@ void TestMesh::testMarchingCubes(){
     CPPUNIT_ASSERT(mesh->getTris().size() == 1);
     CPPUNIT_ASSERT(mesh->getVerts().size() != 0);
     
+    
     cerr << "MARCHING CUBES TEST PASSED" << endl;
 }
 

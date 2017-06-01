@@ -891,19 +891,18 @@ void Mesh::boxFit(float sidelen)
     }
 }
 
-
+// marches a single cube
 void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
 {
 
 	int edgeFlag,vertFlag,iVertex;
 	cgp::Point xSect;
 	cgp::Point edgesVec[12];
-	cgp::Vector normEdgesVec[12];
 	cgp::Point worldCoords;
     
-    vertFlag = vox.getMCVertIdx(x,y,z);
+    vertFlag = vox.getMCVertIdx(x,y,z); // gets vertex bit code
     
-    edgeFlag = vox.getMCEdgeIdx(vertFlag);
+    edgeFlag = vox.getMCEdgeIdx(vertFlag); // gets edge bit code
     
     if(edgeFlag == 0) 
     {
@@ -915,6 +914,7 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
     {
     	xSect = vox.getMCEdgeXsect(iEdge);
     	
+    	// calculates the edges in world space
     	if(edgeFlag & (1<<iEdge)){
     		worldCoords = vox.getVoxelPos(x+xSect.x, y+xSect.y, z+xSect.z) ;
     		edgesVec[iEdge].x = worldCoords.x;
@@ -929,22 +929,15 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
     {
 		if(triangleTable[vertFlag][3*iTriangle] < 0)
 			break;
-		//Triangle tri;
 		
+		// adds vert to verts based on triangle
 		for(int iCorner = 0; iCorner < 3; iCorner++)
         {
-        	//cerr << vertFlag << endl;
         	iVertex = triangleTable[vertFlag][3*iTriangle+iCorner];
-        	//cgp::Point pnt = edgesVec[iVertex];
         	verts.push_back(edgesVec[iVertex]);
-        	//tri.n = normEdgesVec[iVertex];
-			//tri.n.normalize();
-        	//tri.v[iCorner] = verts.size()-1;
-            //glColor3f(1.0f, 1.0f, 1.0f);
-            //glNormal3f(normEdgesVec[iVertex].i, normEdgesVec[iVertex].j, normEdgesVec[iVertex].k);
-            //glVertex3f(edgesVec[iVertex].i, edgesVec[iVertex].j, edgesVec[iVertex].k);
         }
         
+        // creates triangle from verts
         Triangle tri;
         tri.v[0] = verts.size()-1;
         tri.v[1] = verts.size()-2;
@@ -960,14 +953,14 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
 void Mesh::marchingCubes(VoxelVolume vox)
 {
     // stub, needs completing
+    // gets x,y and z dimension of voxel volume
     int dimX, dimY, dimZ;
     vox.getDim(dimX, dimY, dimZ);
-    /*cgp::Point voxCorner;
-    cgp::Vector voxDiagonal;
-    vox.getFrame(voxCorner, voxDiagonal);*/
-    //cerr << dimX << " " << dimY << " " << dimZ << endl;
+    
+    // clear tris and verts
     tris.clear();
     verts.clear();
+    // runs march cube on each voxel
     for (int i=0; i<dimX-1; i++){
     	for (int j=0; j<dimY-1; j++){
     		for (int k=0; k<dimZ-1; k++){
@@ -975,6 +968,8 @@ void Mesh::marchingCubes(VoxelVolume vox)
     		}
     	}
     }
+    
+    // cleans verts and finds normals
     mergeVerts();
     deriveFaceNorms();
     deriveVertNorms();
@@ -1000,7 +995,7 @@ void Mesh::laplacianSmooth(int iter, float rate)
     
     for (int i=0; i<iter; i++){
     	for (int j=0; j<(int)verts.size(); j++){
-    	
+    		// adds neighbour triangles to set
     		std::set<int> vertNeighbours;
     		for (int k=0; k<(int)incidentTris[j].size(); k++){
     			Triangle temp = tris[incidentTris[j][k]];
@@ -1008,15 +1003,18 @@ void Mesh::laplacianSmooth(int iter, float rate)
     			vertNeighbours.insert(temp.v[1]);
     			vertNeighbours.insert(temp.v[2]);
     		}
-    		vertNeighbours.erase(j);
+    		vertNeighbours.erase(j); // remove original tri from neighbours
     		
-    		cgp::Point avgDifference(0.0f,0.0f,0.0f);
+    		float val = 0.0f;
+    		cgp::Point avgDifference(val, val, val);
+    		// iterates through neighbours to get difference
 			for (auto k=vertNeighbours.begin(); k!=vertNeighbours.end(); k++){
 				avgDifference.x += verts[*k].x - verts[j].x;
 				avgDifference.y += verts[*k].y - verts[j].y;
 				avgDifference.z += verts[*k].z - verts[j].z;
 			}
 			
+			// calculates average difference of neighbours from tri
 			float average = 1.0f/vertNeighbours.size();
 			avgDifference.x *= average;
 			avgDifference.y *= average;
@@ -1037,6 +1035,12 @@ void Mesh::laplacianSmooth(int iter, float rate)
 void Mesh::applyFFD(ffd * lat)
 {
     // stub, needs completing
+    for (int i=0; i<(int)verts.size(); i++){
+    	lat->deform(verts[i]);
+    }
+    
+    deriveFaceNorms();
+    deriveVertNorms();
 }
 
 bool Mesh::readSTL(string filename)

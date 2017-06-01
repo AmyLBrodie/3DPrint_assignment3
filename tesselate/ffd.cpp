@@ -77,6 +77,29 @@ ffd::ffd(int xnum, int ynum, int znum, cgp::Point corner, cgp::Vector diag)
 void ffd::reset()
 {
     // stub, needs completing
+    float val = 0.0f;
+    
+    float pos1 = dimx-1;
+    float pos2 = dimy-1;
+    float pos3 = dimz-1;
+    
+    // creates S,T and U vectors
+    cgp::Vector SVector(diagonal.i,val,val);
+    cgp::Vector TVector(val,diagonal.j,val);
+    cgp::Vector UVector(val,val,diagonal.k);
+    
+    
+    // resets position of control points in lattice
+    for (int i=0; i<dimx; i++){
+    	for (int j=0; j<dimy; j++){
+    		for (int k=0; k<dimz; k++){
+    			cp[i][j][k] = origin;
+    			cp[i][j][k].x = ((i/pos1) * SVector.i) + ((j/pos2) * TVector.i) + ((k/pos3) * UVector.i);
+    			cp[i][j][k].y = ((i/pos1) * SVector.j) + ((j/pos2) * TVector.j) + ((k/pos3) * UVector.j);
+    			cp[i][j][k].z = ((i/pos1) * SVector.k) + ((j/pos2) * TVector.k) + ((k/pos3) * UVector.k);
+    		}
+    	}
+    }
 }
 
 void ffd::getDim(int &numx, int &numy, int &numz)
@@ -209,7 +232,70 @@ void ffd::setCP(int i, int j, int k, cgp::Point pnt)
         cp[i][j][k] = pnt;
 }
 
+int choose(int i, int j){
+	if (j == 0){
+		return 1;
+	}
+	else{
+		return (i * choose(i-1, j-1)) / j;
+	}
+}
+
 void ffd::deform(cgp::Point & pnt)
 {
     // stub, needs completing
+    float val = 0.0f;
+    
+    // finds difference between the origin and a point
+    cgp::Vector difference;
+    difference.diff(origin, pnt);
+    
+    // Creates the S,T and U vectors
+    cgp::Vector SVector(diagonal.i, val, val);
+    cgp::Vector TVector(val, diagonal.j, val);
+    cgp::Vector UVector(val, val, diagonal.k);
+    
+    // finds the cross product of T and U
+    cgp::Vector crossTU;
+    crossTU.cross(TVector,UVector);
+    float s = (crossTU.dot(difference))/(crossTU.dot(SVector));
+    
+    // finds the cross product of S and T
+    cgp::Vector crossST;
+    crossST.cross(SVector,TVector);
+    float u = (crossST.dot(difference))/(crossST.dot(UVector));
+    
+    // finds the cross product of S and U
+    cgp::Vector crossSU;
+    crossSU.cross(SVector,UVector);
+    float t = (crossSU.dot(difference))/(crossSU.dot(TVector));
+    
+    
+    // gives influence of control points in lattice
+    
+    cgp::Point sumOfX(val, val, val); // intialise point for x influence
+    for (int i=0; i<dimx; i++){
+    	cgp::Point sumOfY(val, val, val); // intialise point for y influence
+    	for (int j=0; j<dimx; j++){
+    		cgp::Point sumOfZ(val, val, val); // intialise point for z influence
+    		for (int k=0; k<dimx; k++){
+    			float z = choose(dimz-1,k) * pow(1-u,dimz-1-k) * pow(u,k);
+    			
+    			sumOfZ.x += z * cp[i][j][k].x;
+    			sumOfZ.y += z * cp[i][j][k].y;
+    			sumOfZ.z += z * cp[i][j][k].z;
+    		}
+    		float y = choose(dimy-1,j) * pow(1-t,dimy-1-j) * pow(t,j);
+    		
+    		sumOfY.x += y * sumOfZ.x;
+			sumOfY.y += y * sumOfZ.y;
+			sumOfY.z += y * sumOfZ.z;
+    	}
+    	float x = choose(dimx-1, i) * pow(1-s,dimx-1-i) * pow(s,i);
+    	
+    	sumOfX.x += x * sumOfY.x;
+		sumOfX.y += x * sumOfY.y;
+		sumOfX.z += x * sumOfY.z;
+    }
+    pnt = sumOfX;
 }
