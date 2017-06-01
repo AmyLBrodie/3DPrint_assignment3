@@ -952,7 +952,6 @@ void Mesh::marchCube(VoxelVolume & vox, int x, int y, int z)
 
 void Mesh::marchingCubes(VoxelVolume vox)
 {
-    // stub, needs completing
     // gets x,y and z dimension of voxel volume
     int dimX, dimY, dimZ;
     vox.getDim(dimX, dimY, dimZ);
@@ -980,7 +979,6 @@ void Mesh::marchingCubes(VoxelVolume vox)
 
 void Mesh::laplacianSmooth(int iter, float rate)
 {
-    // stub, needs completing
     std::vector<std::vector<int>> incidentTris;
     std::vector<int> tempVector;
     for (int i=0; i< (int) verts.size(); i++){
@@ -1034,7 +1032,6 @@ void Mesh::laplacianSmooth(int iter, float rate)
 
 void Mesh::applyFFD(ffd * lat)
 {
-    // stub, needs completing
     for (int i=0; i<(int)verts.size(); i++){
     	lat->deform(verts[i]);
     }

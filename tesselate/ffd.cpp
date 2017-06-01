@@ -76,7 +76,6 @@ ffd::ffd(int xnum, int ynum, int znum, cgp::Point corner, cgp::Vector diag)
 
 void ffd::reset()
 {
-    // stub, needs completing
     float val = 0.0f;
     
     float pos1 = dimx-1;
@@ -243,7 +242,6 @@ int choose(int i, int j){
 
 void ffd::deform(cgp::Point & pnt)
 {
-    // stub, needs completing
     float val = 0.0f;
     
     // finds difference between the origin and a point
