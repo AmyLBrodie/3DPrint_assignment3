@@ -231,15 +231,16 @@ void ffd::setCP(int i, int j, int k, cgp::Point pnt)
         cp[i][j][k] = pnt;
 }
 
-int choose(int i, int j){
+int chooseRecurse(int i, int j){
 	if (j == 0){
 		return 1;
 	}
 	else{
-		return (i * choose(i-1, j-1)) / j;
+		return (i * chooseRecurse(i-1, j-1)) / j;
 	}
 }
 
+// so far it just places the shape in the lattice, I couldn't figure out the rest
 void ffd::deform(cgp::Point & pnt)
 {
     float val = 0.0f;
@@ -277,19 +278,19 @@ void ffd::deform(cgp::Point & pnt)
     	for (int j=0; j<dimx; j++){
     		cgp::Point sumOfZ(val, val, val); // intialise point for z influence
     		for (int k=0; k<dimx; k++){
-    			float z = choose(dimz-1,k) * pow(1-u,dimz-1-k) * pow(u,k);
+    			float z = chooseRecurse(dimz-1,k) * pow(1-u,dimz-1-k) * pow(u,k);
     			
     			sumOfZ.x += z * cp[i][j][k].x;
     			sumOfZ.y += z * cp[i][j][k].y;
     			sumOfZ.z += z * cp[i][j][k].z;
     		}
-    		float y = choose(dimy-1,j) * pow(1-t,dimy-1-j) * pow(t,j);
+    		float y = chooseRecurse(dimy-1,j) * pow(1-t,dimy-1-j) * pow(t,j);
     		
     		sumOfY.x += y * sumOfZ.x;
 			sumOfY.y += y * sumOfZ.y;
 			sumOfY.z += y * sumOfZ.z;
     	}
-    	float x = choose(dimx-1, i) * pow(1-s,dimx-1-i) * pow(s,i);
+    	float x = chooseRecurse(dimx-1, i) * pow(1-s,dimx-1-i) * pow(s,i);
     	
     	sumOfX.x += x * sumOfY.x;
 		sumOfX.y += x * sumOfY.y;
